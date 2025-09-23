@@ -690,6 +690,19 @@ public class ResponseModelGenerator {
         members.remove("contentType"); //only getter from interface
         members.remove("contentLength"); //only getter from interface
 
+
+        ctx.push(clazz, "/**");
+        ctx.push(clazz, " * This method always throws the response as an exception. It doesnt return, it always throws.");
+        ctx.push(clazz,
+                    " * If this response contains binary data that is not yet received, ",
+                 " * then that data may be truncated by this call and the binary stream will always be closed.");
+        ctx.push(clazz, " */");
+        ctx.push(clazz, "public "+ ctx.qualifyCommonApiClass("ApiException") +" throwIt() throws " + ctx.qualifyCommonApiClass("ApiException") + " {");
+        ctx.addIndent(clazz);
+        ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body);");
+        ctx.subIndent(clazz);
+        ctx.push(clazz, "}");
+
         Util.generateHashCodeEquals(ctx, clazz, members);
         Util.generateToString(ctx, clazz, name, members);
 
