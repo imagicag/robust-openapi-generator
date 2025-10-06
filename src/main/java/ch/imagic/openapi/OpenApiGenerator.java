@@ -117,6 +117,10 @@ public class OpenApiGenerator {
             extContext.setCommonApiSourceRoot(config.getCommonApiSourceTargetDir());
             extContext.setCommonImplSourceRoot(config.getCommonImplSourceTargetDir());
 
+            extContext.setJackson(config.isJackson());
+            extContext.setJsr380(config.isJsr380());
+            extContext.setGson(config.isGson());
+
             extContext.setPackageName(config.getExtensionPackage());
             extContext.setCommonPackageName(config.getCommonPackageName());
             extContext.setModelSuffix(config.getExtensionModelSuffix());

@@ -34,7 +34,7 @@ public class ByteArrayBinaryPayload implements BinaryPayload {
         this.data = Objects.requireNonNull(data);
         this.off = off;
         this.len = len;
-        if (off >= data.length || off + len > data.length || len < 0 || off < 0) {
+        if ((off >= data.length && off != 0) || off + len > data.length || len < 0 || off < 0) {
             throw new IllegalArgumentException("invalid offsets");
         }
     }

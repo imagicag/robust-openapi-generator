@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 
 public class RequestModelGenerator {
 
-    public static String generateRequestModel(GenerationContext ctx, PathModel model, String mimeType) {
+    public static String generateRequestModel(GenerationContext ctx, PathModel model, String path, String mimeType) {
 
         String name = ctx.operationIdAndMimeToRequestClass(model.getOperationId(), mimeType);
         String clazz = ctx.qualifyRequestClass(name);
@@ -94,7 +94,9 @@ public class RequestModelGenerator {
                             if (paramClazz == SchemaClassification.STRING) {
                                 //Theres other case where we have to add NotEmpty, but there are very hard to detect and rare (mostly list/map parameter)
                                 //This is a cheap win
-                                ctx.push(clazz, "@jakarta.validation.constraints.NotEmpty");
+                                if (!".*".equals(pm.getSchema().getPattern()) || !path.endsWith("{"+pm.getName()+"}")) {
+                                    ctx.push(clazz, "@jakarta.validation.constraints.NotEmpty");
+                                }
                             }
                         }
                         required = true;

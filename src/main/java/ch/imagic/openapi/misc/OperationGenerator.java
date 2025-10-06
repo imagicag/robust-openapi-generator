@@ -110,7 +110,7 @@ public class OperationGenerator {
                 if (model.getRequestBody() == null && (model.getParameters() == null || model.getParameters().length == 0)) {
                     // There is no request body or query parameter.
                     // There is nothing to pass for a parameter.
-                    String requestParameterClass = RequestModelGenerator.generateRequestModel(ctx, model, null);
+                    String requestParameterClass = RequestModelGenerator.generateRequestModel(ctx, model, path, null);
 
                     String methodNameToGenerate = model.getOperationId();
                     if (ctx.isExtensionOperation(model.getOperationId())) {
@@ -132,7 +132,7 @@ public class OperationGenerator {
 
                 if (model.getRequestBody() == null) {
                     //We have only stuff like query parameters, but no body
-                    String requestParameterClass = RequestModelGenerator.generateRequestModel(ctx, model, null);
+                    String requestParameterClass = RequestModelGenerator.generateRequestModel(ctx, model, path, null);
 
                     String methodNameToGenerate = model.getOperationId();
                     if (ctx.isExtensionOperation(model.getOperationId())) {
@@ -158,7 +158,7 @@ public class OperationGenerator {
                 Set<String> requestParameterClasses = new HashSet<>();
                 RequestBodyModel requestBody = ctx.findRequestBody(model.getRequestBody().get$ref());
                 for (String ctype : requestBody.getContent().keySet()) {
-                    String requestParameterClass = RequestModelGenerator.generateRequestModel(ctx, model, ctype);
+                    String requestParameterClass = RequestModelGenerator.generateRequestModel(ctx, model, path, ctype);
                     requestParameterClasses.add(requestParameterClass);
                     String mctype = Util.mangleContentType(Util.capitalize(ctype));
                     String methodNameToGenerate = model.getOperationId() + mctype;
@@ -610,6 +610,10 @@ public class OperationGenerator {
 
         PathSchemaModel plain = content.get("text/plain");
         if (plain != null) {
+            if (!content.containsKey("*/*") && !content.containsKey("application/octet-stream")) {
+                ctx.push(apiClassName, "case \"no-content-type\":");
+                ctx.push(apiClassName, "//FALL THROUGH");
+            }
             ctx.push(apiClassName, "case \"text/plain\": {");
             ctx.addIndent(apiClassName);
             ctx.push(apiClassName, "Object result;");
@@ -637,6 +641,10 @@ public class OperationGenerator {
             if (e.getKey().equals("*/*")) {
                 ctx.push(apiClassName,"default: {");
             } else {
+                if (e.getKey().equals("application/octet-stream") && !content.containsKey("*/*")) {
+                    ctx.push(apiClassName, "case \"no-content-type\":");
+                    ctx.push(apiClassName, "//FALL THROUGH");
+                }
                 ctx.push(apiClassName,"case \""+Util.escapeForSourceCode(e.getKey().toLowerCase())+"\": {");
             }
 

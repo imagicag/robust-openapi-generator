@@ -96,6 +96,12 @@ public class ResponseModelGenerator {
             hasTrivial404 = true;
         }
 
+        boolean hasText404 = false;
+        if (!hasTrivial404 && variantNameToStatusCodePrefix.containsKey("S404_TEXT_PLAIN")) {
+            hasText404 = true;
+        }
+
+
         ctx.push(clazz, "private final Variant variant;");
         ctx.push(clazz, "");
         ctx.push(clazz, "private final int statusCode;");
@@ -453,12 +459,16 @@ public class ResponseModelGenerator {
             ctx.push(clazz, "}");
             ctx.push(clazz, "");
 
-            if (hasTrivial404) {
+            if (hasTrivial404 || hasText404) {
                 ctx.push(clazz, "public java.util.Optional<" + jsonBodyTypeName + "> getResponseBody" + statusCode + "JsonOr404() throws " + ctx.qualifyCommonApiClass("ApiException") + " {");
                 ctx.addIndent(clazz);
                 ctx.push(clazz, "if (variant != Variant." + variantName + ") {");
                 ctx.addIndent(clazz);
-                ctx.push(clazz, "if (variant != Variant.S404) {");
+                if (hasText404) {
+                    ctx.push(clazz, "if (variant != Variant.S404_TEXT_PLAIN) {");
+                } else {
+                    ctx.push(clazz, "if (variant != Variant.S404) {");
+                }
                 ctx.addIndent(clazz);
                 ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Wrong body for variant \" + this.variant);");
                 ctx.subIndent(clazz);
@@ -546,12 +556,16 @@ public class ResponseModelGenerator {
             ctx.push(clazz, "}");
             ctx.push(clazz, "");
 
-            if (hasTrivial404) {
+            if (hasTrivial404 || (hasText404 && !"S404_TEXT_PLAIN".equals(variantName))) {
                 ctx.push(clazz, "public java.util.Optional<String> getResponseBody" + statusCode + "StringOr404() throws " + ctx.qualifyCommonApiClass("ApiException") + " {");
                 ctx.addIndent(clazz);
                 ctx.push(clazz, "if (variant != Variant." + variantName + ") {");
                 ctx.addIndent(clazz);
-                ctx.push(clazz, "if (variant != Variant.S404) {");
+                if (hasText404) {
+                    ctx.push(clazz, "if (variant != Variant.S404_TEXT_PLAIN) {");
+                } else {
+                    ctx.push(clazz, "if (variant != Variant.S404) {");
+                }
                 ctx.addIndent(clazz);
                 ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Wrong body for variant \" + this.variant);");
                 ctx.subIndent(clazz);
@@ -648,12 +662,16 @@ public class ResponseModelGenerator {
                 ctx.push(clazz, "}");
                 ctx.push(clazz, "");
 
-                if (hasTrivial404) {
+                if (hasTrivial404 | hasText404) {
                     ctx.push(clazz, "public java.util.Optional<"+ctx.qualifyCommonApiClass("BinaryPayload")+"> getResponseBody" + mangledSuffix + "Or404() throws " + ctx.qualifyCommonApiClass("ApiException") + " {");
                     ctx.addIndent(clazz);
                     ctx.push(clazz, "if (variant != Variant." + variantName + ") {");
                     ctx.addIndent(clazz);
-                    ctx.push(clazz, "if (variant != Variant.S404) {");
+                    if (hasText404) {
+                        ctx.push(clazz, "if (variant != Variant.S404_TEXT_PLAIN) {");
+                    } else {
+                        ctx.push(clazz, "if (variant != Variant.S404) {");
+                    }
                     ctx.addIndent(clazz);
                     ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Wrong body for variant \" + this.variant);");
                     ctx.subIndent(clazz);
