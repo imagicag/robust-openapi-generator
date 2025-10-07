@@ -172,7 +172,7 @@ public class ApiException extends RuntimeException {
             return "HTTP " +  statusCode + " received from server";
         }
 
-        return "HTTP " +  statusCode + "body: " + body + " received from server";
+        return "HTTP " +  statusCode + " body: " + body + " received from server";
     }
 
     private static boolean isUTF8(byte[] bytes) {
