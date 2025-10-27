@@ -5,8 +5,6 @@ target/
 testproject/target
 testproject/src/main/java/untertest
 /testproject/src/main/java/undertest/*
-README_2.md
-EXTENSION.md
 
 ### IntelliJ IDEA ###
 *.iws
