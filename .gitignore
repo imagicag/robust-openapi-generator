@@ -5,6 +5,7 @@ target/
 testproject/target
 testproject/src/main/java/untertest
 /testproject/src/main/java/undertest/*
+/deploy
 
 ### IntelliJ IDEA ###
 *.iws
