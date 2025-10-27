@@ -269,7 +269,7 @@ When using schemas with anyOf the generator will generate annotations for the Ja
 
 It is probably worth considering to avoid "anyOf" or "oneOf" when designing an API, because not all JSON frameworks can trivially handle it.
 
-##Any type
+## Any type
 If your schema uses the Any type then this type is simply mapped to java.lang.Object. It's unlikely that your JSON Framework will by itself deserialize this correctly. It's likely necessary to write custom code for any deserialization of the Any type in a Response. It is probably worth considering to avoid the Any type when designing an API.
 
 ## Name mangling
