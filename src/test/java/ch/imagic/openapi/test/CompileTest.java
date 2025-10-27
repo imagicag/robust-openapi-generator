@@ -47,7 +47,6 @@ public class CompileTest {
     public void test() throws Exception {
         OpenApiGeneratorConfig config = new OpenApiGeneratorConfig();
         config.setSchema(new File("petstore-expanded.json"));
-        //config.setSchema(new File("/home/user/git/rest-api-connector/src/main/resources/vision-license-server.json"));
         config.setPackageName("undertest");
         File sourceDir = new File("testproject/src/main/java");
         config.setCommonPackageName("undertest.common");
