@@ -71,19 +71,19 @@ public interface Visitable {
 
             switch (act) {
                 case CONTINUE:
-                    if (item instanceof Visitable) {
-                        Visitable visitable = (Visitable) item;
+                    if (v instanceof Visitable) {
+                        Visitable visitable = (Visitable) v;
                         visitable.visit(visitor);
                         continue;
                     }
 
-                    if (item instanceof Iterable) {
-                        visitIterable(visitor, (Iterable<?>) item);
+                    if (v instanceof Iterable) {
+                        visitIterable(visitor, (Iterable<?>) v);
                         continue;
                     }
 
-                    if (item instanceof Map) {
-                        visitMap(visitor, (Map<?, ?>) item);
+                    if (v instanceof Map) {
+                        visitMap(visitor, (Map<?, ?>) v);
                         continue;
                     }
 

@@ -6,7 +6,7 @@
 
     <groupId>ch.imagic</groupId>
     <artifactId>robust-openapi-generator</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <description>OpenAPI 3.X Client Generator for the Java Programming Language using minimal external dependencies.</description>
     <url>https://github.com/imagicag/robust-openapi-generator</url>
