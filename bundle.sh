@@ -20,8 +20,8 @@ mkdir -p deploy/ch/imagic/robust-openapi-generator/$VERSION
 cp target/robust-openapi-generator* deploy/ch/imagic/robust-openapi-generator/$VERSION/
 
 #We dont publish this to maven central.
-rm -f deploy/ch/imagic/robust-openapi-generator/$VERSION/robust-openapi-generator-0.1.0-jar-with-dependencies.jar
-rm -f deploy/ch/imagic/robust-openapi-generator/$VERSION/robust-openapi-generator-0.1.0-jar-with-dependencies.jar.asc
+rm -f deploy/ch/imagic/robust-openapi-generator/$VERSION/robust-openapi-generator-$VERSION-jar-with-dependencies.jar
+rm -f deploy/ch/imagic/robust-openapi-generator/$VERSION/robust-openapi-generator-$VERSION-jar-with-dependencies.jar.asc
 
 cd deploy
 zip -r b.zip ch
