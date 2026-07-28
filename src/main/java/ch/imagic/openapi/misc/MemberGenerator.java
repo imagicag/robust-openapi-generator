@@ -151,7 +151,7 @@ public class MemberGenerator {
         context.push(fullyQualified, "this."+mangledName+" = new java.util.LinkedHashSet<>();");
         context.subIndent(fullyQualified);
         context.push(fullyQualified,"}");
-        context.push(fullyQualified, "if ("+mangledName + " == null) {");
+        context.push(fullyQualified, "if (value == null) {");
         context.addIndent(fullyQualified);
         context.push(fullyQualified, "return this;");
         context.subIndent(fullyQualified);
@@ -238,7 +238,7 @@ public class MemberGenerator {
         context.push(fullyQualified, "this."+mangledName+" = new java.util.ArrayList<>();");
         context.subIndent(fullyQualified);
         context.push(fullyQualified,"}");
-        context.push(fullyQualified, "if ("+mangledName + " == null) {");
+        context.push(fullyQualified, "if (value == null) {");
         context.addIndent(fullyQualified);
         context.push(fullyQualified, "return this;");
         context.subIndent(fullyQualified);
