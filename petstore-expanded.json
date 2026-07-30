@@ -407,10 +407,89 @@
           }
         }
       }
+    },
+    "/fakes": {
+      "get": {
+        "description": "Returns a plain json array of fake complex objects with two properties",
+        "operationId": "listFakes",
+        "responses": {
+          "200": {
+            "description": "fake response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "$ref": "#/components/schemas/FakeItem"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fakes-map": {
+      "get": {
+        "description": "Returns a plain json object (map of string to fake complex object with two properties)",
+        "operationId": "listFakesMap",
+        "responses": {
+          "200": {
+            "description": "fake response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/components/schemas/FakeItem"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "FakeItem": {
+        "type": "object",
+        "required": [
+          "fakeId",
+          "fakeName"
+        ],
+        "properties": {
+          "fakeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fakeName": {
+            "type": "string"
+          }
+        }
+      },
       "PetRef": {
         "$ref": "#/components/schemas/Pet"
       },
@@ -571,6 +650,24 @@
           },
           "class": {
             "type": "string"
+          },
+          "int": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/components/schemas/FakeItem"
+            }
+          },
+          "float": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FakeItem"
+            }
+          },
+          "double": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FakeItem"
+            }
           },
           "message": {
             "type": "string"

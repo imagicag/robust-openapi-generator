@@ -29,6 +29,7 @@ public class MemberGenerator {
             if (context.gson()) {
                 context.push(fullyQualified, "@com.google.gson.annotations.SerializedName(\"" + Util.escapeForSourceCode(propName) + "\")");
             }
+            context.push(fullyQualified, "@" + context.getCommonApiPackageName() + ".FieldName(\"" + Util.escapeForSourceCode(propName) + "\")");
         }
 
         context.push(fullyQualified, "private "+memberType+" " + mangledName + ";");
@@ -66,6 +67,10 @@ public class MemberGenerator {
             if (context.jackson()) {
                 context.push(fullyQualified, "@com.fasterxml.jackson.annotation.JsonProperty(\"" +  Util.escapeForSourceCode(propName) +  "\")");
             }
+            if (context.gson()) {
+                context.push(fullyQualified, "@com.google.gson.annotations.SerializedName(\"" + Util.escapeForSourceCode(propName) + "\")");
+            }
+            context.push(fullyQualified, "@" + context.getCommonApiPackageName() + ".FieldName(\"" + Util.escapeForSourceCode(propName) + "\")");
         }
 
         //Util.pushJavaDoc(context, fullyQualified, propSchema);
@@ -168,6 +173,10 @@ public class MemberGenerator {
             if (context.jackson()) {
                 context.push(fullyQualified, "@com.fasterxml.jackson.annotation.JsonProperty(\"" +  Util.escapeForSourceCode(propName) +  "\")");
             }
+            if (context.gson()) {
+                context.push(fullyQualified, "@com.google.gson.annotations.SerializedName(\"" + Util.escapeForSourceCode(propName) + "\")");
+            }
+            context.push(fullyQualified, "@" + context.getCommonApiPackageName() + ".FieldName(\"" + Util.escapeForSourceCode(propName) + "\")");
         }
 
         //Util.pushJavaDoc(context, fullyQualified, propSchema);
@@ -255,6 +264,10 @@ public class MemberGenerator {
             if (context.jackson()) {
                 context.push(fullyQualified, "@com.fasterxml.jackson.annotation.JsonProperty(\"" +  Util.escapeForSourceCode(propName) +  "\")");
             }
+            if (context.gson()) {
+                context.push(fullyQualified, "@com.google.gson.annotations.SerializedName(\"" + Util.escapeForSourceCode(propName) + "\")");
+            }
+            context.push(fullyQualified, "@" + context.getCommonApiPackageName() + ".FieldName(\"" + Util.escapeForSourceCode(propName) + "\")");
         }
 
         //Util.pushJavaDoc(context, fullyQualified, propSchema);

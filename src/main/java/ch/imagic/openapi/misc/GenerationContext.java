@@ -61,6 +61,8 @@ public class GenerationContext {
     private boolean gson = false;
     private boolean jackson = false;
 
+    private List<String> reponseBodyObjectAnnotations = new ArrayList<>();
+
     private Map<String, Map<Integer, String>> managledRequestParameterNames = new HashMap<>();
 
     public GenerationContext(RootModel model) {
@@ -97,6 +99,14 @@ public class GenerationContext {
             dir = Objects.requireNonNull(this.getCommonApiSourceRoot(), "commonApiSourceRoot must not be null");
         }
         return dir;
+    }
+
+    public List<String> getReponseBodyObjectAnnotations() {
+        return reponseBodyObjectAnnotations;
+    }
+
+    public void setReponseBodyObjectAnnotations(List<String> reponseBodyObjectAnnotations) {
+        this.reponseBodyObjectAnnotations = reponseBodyObjectAnnotations;
     }
 
     public void setJsr380(boolean jsr380) {

@@ -301,6 +301,9 @@ public class DataModelGenerator {
                     }
 
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, "java.util.Set<"+clazz+">", propSchema);
                     break;
                 }
@@ -335,6 +338,9 @@ public class DataModelGenerator {
                     }
 
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateSetMember(context, fullyQualified, propName, mangledName, classname, clazz, propSchema);
                     break;
                 }
@@ -369,6 +375,9 @@ public class DataModelGenerator {
                     }
 
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateSetMember(context, fullyQualified, propName, mangledName, classname, "java.util.Map<String, "+clazz+">", propSchema);
                     break;
                 }
@@ -403,6 +412,9 @@ public class DataModelGenerator {
                     }
 
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateListMember(context, fullyQualified, propName, mangledName, classname, clazz, propSchema);
                     break;
                 }
@@ -436,6 +448,9 @@ public class DataModelGenerator {
                         throw new IllegalStateException("Reference " + ref + " not found when generating schema " + name + " field " + propName);
                     }
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, clazz, propSchema);
                     break;
                 }
@@ -467,6 +482,9 @@ public class DataModelGenerator {
                         throw new IllegalStateException("Reference " + ref + " not found when generating schema " + name + " field " + propName);
                     }
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, "java.util.List<"+clazz+">", propSchema);
                     break;
                 }
@@ -474,17 +492,17 @@ public class DataModelGenerator {
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, "java.util.List<Object>", propSchema);
                     break;
                 case MULTI_DIMENSIONAL_MAP: {
-                    String typeName = Util.findRecursiveTypeName(context, propSchema.getAdditionalProperties(), enumName);
+                    String typeName = Util.findRecursiveTypeName(context, propSchema.getAdditionalProperties(), enumName, context.jsr380());
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, typeName, propSchema);
                     break;
                 }
                 case MULTI_DIMENSIONAL_ARRAY: {
-                    String typeName = Util.findRecursiveTypeName(context, propSchema.getItems(), enumName);
+                    String typeName = Util.findRecursiveTypeName(context, propSchema.getItems(), enumName, context.jsr380());
                     MemberGenerator.generateListMember(context, fullyQualified, propName, mangledName, classname, typeName, propSchema);
                     break;
                 }
                 case MULTI_DIMENSIONAL_SET: {
-                    String typeName = Util.findRecursiveTypeName(context, propSchema.getItems(), enumName);
+                    String typeName = Util.findRecursiveTypeName(context, propSchema.getItems(), enumName, context.jsr380());
                     MemberGenerator.generateSetMember(context, fullyQualified, propName, mangledName, classname, typeName, propSchema);
                     break;
                 }
@@ -528,7 +546,9 @@ public class DataModelGenerator {
                         throw new IllegalStateException("Reference " + ref + " not found when generating schema " + name + " field " + propName);
                     }
                     String clazz = context.qualifyModelClass(context.modelNameToJavaClass(ref));
-
+                    if (context.jsr380()) {
+                        clazz = Util.withValidAnnotation(clazz);
+                    }
                     MemberGenerator.generateListMember(context, fullyQualified, propName, mangledName, classname, "Map<String, " + clazz + ">", propSchema);
                     break;
                 }
@@ -635,7 +655,7 @@ public class DataModelGenerator {
 
         //Yes, ghetto I know.
         if (propClassification.name().startsWith("ARRAY_")) {
-            context.push(fullyQualified, "@jakarta.validation.Valid");
+            //context.push(fullyQualified, "@jakarta.validation.Valid");
             int max = Integer.MAX_VALUE;
             int min = 0;
             if (propSchema.getMaxItems() != null) {
@@ -656,7 +676,7 @@ public class DataModelGenerator {
 
         //Yes, ghetto I know.
         if (propClassification.name().startsWith("MAP_")) {
-            context.push(fullyQualified, "@jakarta.validation.Valid");
+            //context.push(fullyQualified, "@jakarta.validation.Valid");
             int max = Integer.MAX_VALUE;
             int min = 0;
             if (propSchema.getMaxProperties() != null) {

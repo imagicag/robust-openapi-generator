@@ -15,6 +15,8 @@
 package ch.imagic.openapi;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OpenApiGeneratorConfig {
 
@@ -46,6 +48,8 @@ public class OpenApiGeneratorConfig {
     private boolean gson = false;
     private boolean jackson = false;
 
+    private List<String> responseBodyObjectAnnotations = new ArrayList<>();
+
     private boolean isApiExceptionRuntimeException;
 
     public boolean isApiExceptionRuntimeException() {
@@ -54,6 +58,14 @@ public class OpenApiGeneratorConfig {
 
     public void setApiExceptionRuntimeException(boolean apiExceptionRuntimeException) {
         isApiExceptionRuntimeException = apiExceptionRuntimeException;
+    }
+
+    public List<String> getResponseBodyObjectAnnotations() {
+        return responseBodyObjectAnnotations;
+    }
+
+    public void setResponseBodyObjectAnnotations(List<String> responseBodyObjectAnnotations) {
+        this.responseBodyObjectAnnotations = responseBodyObjectAnnotations;
     }
 
     public File getSchema() {

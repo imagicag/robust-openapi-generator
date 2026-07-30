@@ -319,6 +319,7 @@ public class SchemaPreProcessors {
                 case ARRAY_FLOAT:
                 case ARRAY_DOUBLE:
                 case ARRAY_OBJECT_REF:
+                case SET_OBJECT_REF:
                 case ANY:
                     continue;
                 case UNION:

@@ -248,7 +248,20 @@ public class Util {
         return model != null && "object".equalsIgnoreCase(model.getType()) && "string".equalsIgnoreCase(model.getFormat());
     }
 
-    public static String findRecursiveTypeName(GenerationContext context, SchemaModel schema, String enumName) {
+    /**
+     * Inserts a "@jakarta.validation.Valid" TYPE_USE annotation immediately before the simple
+     * class name of a (possibly fully qualified) class name, as required by the JLS for
+     * annotating qualified type names, e.g. "a.b.Foo" becomes "a.b.@jakarta.validation.Valid Foo".
+     */
+    public static String withValidAnnotation(String qualifiedClassName) {
+        int idx = qualifiedClassName.lastIndexOf('.');
+        if (idx < 0) {
+            return "@jakarta.validation.Valid " + qualifiedClassName;
+        }
+        return qualifiedClassName.substring(0, idx + 1) + "@jakarta.validation.Valid " + qualifiedClassName.substring(idx + 1);
+    }
+
+    public static String findRecursiveTypeName(GenerationContext context, SchemaModel schema, String enumName, boolean useValid) {
         SchemaClassification schemaClassification = SchemaClassification.fromSchema("findRecursiveTypeName", schema);
         switch (schemaClassification) {
             case STRING:
@@ -294,6 +307,9 @@ public class Util {
             case MAP_OBJECT_REF: {
                 String name = schema.getAdditionalProperties().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
+                if (useValid) {
+                    return "java.util.Map<String, " + withValidAnnotation(ctx) + ">";
+                }
                 return "java.util.Map<String, " + ctx + ">";
             }
             case MAP_ANY:
@@ -316,6 +332,9 @@ public class Util {
                 String name = schema.getAdditionalProperties().getItems().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
 
+                if (useValid) {
+                    return "java.util.Map<String, java.util.List<" + withValidAnnotation(ctx) + ">>";
+                }
                 return "java.util.Map<String, java.util.List<" + ctx + ">>";
             }
             case MULTI_DIMENSIONAL_IMPL:
@@ -339,6 +358,9 @@ public class Util {
             case MAP_SET_OBJECT_REF: {
                 String name = schema.getAdditionalProperties().getItems().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
+                if (useValid) {
+                    return "java.util.Map<String, java.util.Set<" + withValidAnnotation(ctx) + ">>";
+                }
                 return "java.util.Map<String, java.util.Set<" + ctx + ">>";
             }
             case MAP_SET_ANY:
@@ -360,6 +382,10 @@ public class Util {
             case SET_OBJECT_REF: {
                 String name = schema.getItems().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
+
+                if (useValid) {
+                    return "java.util.Set<" + withValidAnnotation(ctx) + ">";
+                }
                 return "java.util.Set<" + ctx + ">";
             }
             case SET_ANY:
@@ -383,6 +409,9 @@ public class Util {
             case SET_MAP_OBJECT_REF: {
                 String name = schema.getItems().getAdditionalProperties().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
+                if (useValid) {
+                    return "java.util.Set<java.util.Map<String, " + withValidAnnotation(ctx) + ">>";
+                }
                 return "java.util.Set<java.util.Map<String, " + ctx + ">>";
             }
             case SET_MAP_ANY:
@@ -402,6 +431,9 @@ public class Util {
             case ARRAY_OBJECT_REF: {
                 String name = schema.getItems().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
+                if (useValid) {
+                    return "java.util.List<" + withValidAnnotation(ctx) + ">";
+                }
                 return "java.util.List<" + ctx + ">";
             }
             case ARRAY_IMPL:
@@ -423,6 +455,9 @@ public class Util {
             case ARRAY_MAP_OBJECT_REF: {
                 String name = schema.getItems().getAdditionalProperties().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
+                if (useValid) {
+                    return "java.util.List<java.util.Map<String, " + withValidAnnotation(ctx) + ">";
+                }
                 return "java.util.List<java.util.Map<String, " + ctx + ">";
             }
             case ARRAY_MAP_ANY:
@@ -436,11 +471,11 @@ public class Util {
             case ANY:
                 return "Object";
             case MULTI_DIMENSIONAL_SET:
-                return "java.util.Set<"+findRecursiveTypeName(context, schema.getItems(), enumName)+">";
+                return "java.util.Set<"+findRecursiveTypeName(context, schema.getItems(), enumName, useValid)+">";
             case MULTI_DIMENSIONAL_MAP:
-                return "java.util.Map<String, "+findRecursiveTypeName(context, schema.getItems(), enumName)+">";
+                return "java.util.Map<String, "+findRecursiveTypeName(context, schema.getItems(), enumName, useValid)+">";
             case MULTI_DIMENSIONAL_ARRAY:
-                return "java.util.List<"+findRecursiveTypeName(context, schema.getItems(), enumName)+">";
+                return "java.util.List<"+findRecursiveTypeName(context, schema.getItems(), enumName, useValid)+">";
             default:
                 throw new UnsupportedOperationException("not implemented yet " + schemaClassification);
         }
@@ -541,7 +576,7 @@ public class Util {
         context.push(containingClass, "}");
     }
 
-    public static void generateHashCodeEquals(GenerationContext context,  String fullyQualifiedClazzName, Iterable<String> members) {
+    public static void generateHashCodeEquals(GenerationContext context,  String fullyQualifiedClazzName, Collection<String> members) {
         context.push(fullyQualifiedClazzName ,"");
         context.push(fullyQualifiedClazzName, "@Override");
         context.push(fullyQualifiedClazzName, "public boolean equals(Object o) {");
@@ -553,16 +588,28 @@ public class Util {
         context.push(fullyQualifiedClazzName, "}");
 
         context.push(fullyQualifiedClazzName, fullyQualifiedClazzName + " other = (" + fullyQualifiedClazzName + ") o;");
-
-        context.push(fullyQualifiedClazzName, "return true");
-        context.addIndent(fullyQualifiedClazzName);
-        context.push(fullyQualifiedClazzName, "//");
-        for (String prop : members) {
-            context.push(fullyQualifiedClazzName, "&& java.util.Objects.equals(this." + Util.escapeForSourceCode(prop) + ", other." + Util.escapeForSourceCode(prop) + ")" );
+        if (members.isEmpty()) {
+            context.push(fullyQualifiedClazzName, "return true;");
+        } else if (members.size() == 1) {
+            String prop = members.iterator().next();
+            context.push(fullyQualifiedClazzName, "return java.util.Objects.equals(this." + Util.escapeForSourceCode(prop) + ", other." + Util.escapeForSourceCode(prop) + ");" );
+        } else {
+            Iterator<String> it = members.iterator();
+            var firstProp = it.next();
+            context.push(fullyQualifiedClazzName, "return java.util.Objects.equals(this." + Util.escapeForSourceCode(firstProp) + ", other." + Util.escapeForSourceCode(firstProp) + ")" );
+            context.addIndent(fullyQualifiedClazzName);
+            while(it.hasNext()) {
+                var prop = it.next();
+                if (!it.hasNext()) {
+                    context.push(fullyQualifiedClazzName, "&& java.util.Objects.equals(this." + Util.escapeForSourceCode(prop) + ", other." + Util.escapeForSourceCode(prop) + ");" );
+                    break;
+                }
+                context.push(fullyQualifiedClazzName, "&& java.util.Objects.equals(this." + Util.escapeForSourceCode(prop) + ", other." + Util.escapeForSourceCode(prop) + ")" );
+            }
+            context.subIndent(fullyQualifiedClazzName);
         }
-        context.push(fullyQualifiedClazzName, "//");
-        context.push(fullyQualifiedClazzName, ";");
-        context.subIndent(fullyQualifiedClazzName);
+
+
         context.subIndent(fullyQualifiedClazzName);
         context.push(fullyQualifiedClazzName, "}");
 

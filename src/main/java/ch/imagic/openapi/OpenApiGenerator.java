@@ -89,6 +89,7 @@ public class OpenApiGenerator {
         context.setJackson(config.isJackson());
         context.setJsr380(config.isJsr380());
         context.setGson(config.isGson());
+        context.setReponseBodyObjectAnnotations(config.getResponseBodyObjectAnnotations());
 
         context.setImplSourceRoot(config.getImplSourceTargetDir());
         context.setApiSourceRoot(config.getApiSourceTargetDir());
@@ -120,6 +121,7 @@ public class OpenApiGenerator {
             extContext.setJackson(config.isJackson());
             extContext.setJsr380(config.isJsr380());
             extContext.setGson(config.isGson());
+            extContext.setReponseBodyObjectAnnotations(config.getResponseBodyObjectAnnotations());
 
             extContext.setPackageName(config.getExtensionPackage());
             extContext.setCommonPackageName(config.getCommonPackageName());

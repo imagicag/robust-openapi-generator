@@ -109,8 +109,8 @@ public class ResponseModelGenerator {
         ctx.push(clazz, "private final java.util.Map<String, java.util.List<String>> headers;");
         ctx.push(clazz, "");
 
-        if (ctx.jsr380()) {
-            ctx.push(clazz, "@jakarta.validation.Valid");
+        for (String line: ctx.getReponseBodyObjectAnnotations()) {
+            ctx.push(clazz, line);
         }
         ctx.push(clazz, "private final Object body;");
         ctx.push(clazz, "");
@@ -137,7 +137,7 @@ public class ResponseModelGenerator {
                     enumName = Util.capitalize(fieldName) + "Enum";
                 }
 
-                String typeName = Util.findRecursiveTypeName(ctx, hm.getSchema(), enumName);
+                String typeName = Util.findRecursiveTypeName(ctx, hm.getSchema(), enumName, false);
                 if (headerFieldNamesToTypes.put(fieldName, typeName) != null) {
                     continue;
                 }
@@ -420,7 +420,7 @@ public class ResponseModelGenerator {
                 Util.generateEnum(ctx, clazz, enumName, enumValues);
             }
 
-            String jsonBodyTypeName = Util.findRecursiveTypeName(ctx, psm.getSchema(), enumName);
+            String jsonBodyTypeName = Util.findRecursiveTypeName(ctx, psm.getSchema(), enumName, false);
 
             if (Util.isJsonStringSpecialSchema(psm.getSchema())) {
                 jsonBodyTypeName = "String";
@@ -454,10 +454,31 @@ public class ResponseModelGenerator {
             ctx.push(clazz, "}");
             ctx.push(clazz, "");
 
-            ctx.push(clazz, "return (" + jsonBodyTypeName+ ")this.body;");
+            ctx.push(clazz, "return (" + jsonBodyTypeName+ ") this.body;");
             ctx.subIndent(clazz);
             ctx.push(clazz, "}");
             ctx.push(clazz, "");
+
+            if (ctx.jsr380()) {
+                ctx.push(clazz, "//Only invoked by the validation framework!");
+                String jsonBodyTypeNameWithValid = Util.findRecursiveTypeName(ctx, psm.getSchema(), enumName, true);
+                if (!jsonBodyTypeNameWithValid.contains("<")) {
+                    ctx.push(clazz, "@jakarta.validation.Valid");
+                }
+
+                ctx.push(clazz, "private " + jsonBodyTypeNameWithValid +  " getResponseBodyForValidation" + statusCode + "Json() {");
+                ctx.addIndent(clazz);
+                ctx.push(clazz, "if (variant != Variant." + variantName + ") {");
+                ctx.addIndent(clazz);
+                ctx.push(clazz, "return null;");
+                ctx.subIndent(clazz);
+                ctx.push(clazz, "}");
+                ctx.push(clazz, "");
+                ctx.push(clazz, "return (" + jsonBodyTypeName+ ") this.body;");
+                ctx.subIndent(clazz);
+                ctx.push(clazz, "}");
+                ctx.push(clazz, "");
+            }
 
             if (hasTrivial404 || hasText404) {
                 ctx.push(clazz, "public java.util.Optional<" + jsonBodyTypeName + "> getResponseBody" + statusCode + "JsonOr404() throws " + ctx.qualifyCommonApiClass("ApiException") + " {");
@@ -770,13 +791,14 @@ public class ResponseModelGenerator {
                     enumName = statusCode + "ResponseBodyEnum";
                 }
 
-                String jsonBodyTypeName = Util.findRecursiveTypeName(ctx, aj.getSchema(), enumName);
+                String jsonBodyTypeName = Util.findRecursiveTypeName(ctx, aj.getSchema(), enumName, false);
 
                 if (Util.isJsonStringSpecialSchema(aj.getSchema())) {
                     jsonBodyTypeName = "String";
                 }
 
-                //This is quite pragmatic, but I cant think of anything better currently.
+                SchemaClassification schemaClassification = SchemaClassification.fromSchema("generateConstructorTypeVerifier -> " + model.getOperationId(), aj.getSchema());
+
                 if (jsonBodyTypeName.startsWith("java.util.List<")) {
                     jsonBodyTypeName = "java.util.List";
                 }
@@ -785,15 +807,67 @@ public class ResponseModelGenerator {
                     jsonBodyTypeName = "java.util.Map";
                 }
 
+                if (jsonBodyTypeName.startsWith("java.util.Set<")) {
+                    jsonBodyTypeName = "java.util.Set";
+                }
+
                 if (jsonBodyTypeName.contains("<")) {
                     jsonBodyTypeName = "java.lang.Object";
                 }
 
-                ctx.push(clazz, "if (variant == Variant." + variantName + " && !(this.body instanceof " + jsonBodyTypeName + ")) {");
+                ctx.push(clazz, "if (variant == Variant." + variantName + ") {");
+                ctx.addIndent(clazz);
+                ctx.push(clazz, "if (!(this.body instanceof " + jsonBodyTypeName + ")) {");
                 ctx.addIndent(clazz);
                 ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Response body type mismatch when constructing response object for variant '" + variantName + "'\");");
                 ctx.subIndent(clazz);
                 ctx.push(clazz, "}");
+                if (schemaClassification == SchemaClassification.ARRAY_OBJECT_REF) {
+                    String innerTypeName = Util.findRecursiveTypeName(ctx, aj.getSchema().getItems(), enumName, false);
+                    ctx.push(clazz, "java.util.List<?> bodyList = (java.util.List<?>) this.body;");
+                    ctx.push(clazz, "if (!bodyList.isEmpty()) {");
+                    ctx.addIndent(clazz);
+                    ctx.push(clazz, "Object firstElement = bodyList.get(0);");
+                    ctx.push(clazz, "if (firstElement != null && !(firstElement instanceof " + innerTypeName + ")) {");
+                    ctx.addIndent(clazz);
+                    ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Response body element type mismatch when constructing response object for variant '" + variantName + "'\");");
+                    ctx.subIndent(clazz);
+                    ctx.push(clazz, "}");
+                    ctx.subIndent(clazz);
+                    ctx.push(clazz, "}");
+                }
+                if (schemaClassification == SchemaClassification.SET_OBJECT_REF) {
+                    String innerTypeName = Util.findRecursiveTypeName(ctx, aj.getSchema().getItems(), enumName, false);
+                    ctx.push(clazz, "java.util.Set<?> bodySet = (java.util.Set<?>) this.body;");
+                    ctx.push(clazz, "if (!bodySet.isEmpty()) {");
+                    ctx.addIndent(clazz);
+                    ctx.push(clazz, "Object firstElement = bodySet.iterator().next();");
+                    ctx.push(clazz, "if (firstElement != null && !(firstElement instanceof " + innerTypeName + ")) {");
+                    ctx.addIndent(clazz);
+                    ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Response body element type mismatch when constructing response object for variant '" + variantName + "'\");");
+                    ctx.subIndent(clazz);
+                    ctx.push(clazz, "}");
+                    ctx.subIndent(clazz);
+                    ctx.push(clazz, "}");
+                }
+                if (schemaClassification == SchemaClassification.MAP_OBJECT_REF) {
+                    String innerTypeName = Util.findRecursiveTypeName(ctx, aj.getSchema().getAdditionalProperties(), enumName, false);
+                    ctx.push(clazz, "java.util.Map<?, ?> bodyMap = (java.util.Map<?, ?>) this.body;");
+                    ctx.push(clazz, "if (!bodyMap.isEmpty()) {");
+                    ctx.addIndent(clazz);
+                    ctx.push(clazz, "Object firstElement = bodyMap.values().iterator().next();");
+                    ctx.push(clazz, "if (firstElement != null && !(firstElement instanceof " + innerTypeName + ")) {");
+                    ctx.addIndent(clazz);
+                    ctx.push(clazz, "throw new " + ctx.qualifyCommonApiClass("ApiException") + "(\"" + model.getOperationId() + "\", statusCode, headers, body, \"Response body element type mismatch when constructing response object for variant '" + variantName + "'\");");
+                    ctx.subIndent(clazz);
+                    ctx.push(clazz, "}");
+                    ctx.subIndent(clazz);
+                    ctx.push(clazz, "}");
+                }
+                ctx.subIndent(clazz);
+                ctx.push(clazz, "}");
+
+
             }
 
             for (Map.Entry<String, PathSchemaModel> e2 : resp.getContent().entrySet()) {

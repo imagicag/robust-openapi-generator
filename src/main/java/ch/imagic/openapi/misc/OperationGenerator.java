@@ -545,7 +545,7 @@ public class OperationGenerator {
             if (Util.getEnumRecursive(jzon.getSchema()) != null) {
                 enumName = responseClassName + "." + statusCodeVariantPrefix + "ResponseBodyEnum";
             }
-            String modelClass = Util.findRecursiveTypeName(ctx, jzon.getSchema(), enumName);
+            String modelClass = Util.findRecursiveTypeName(ctx, jzon.getSchema(), enumName, false);
 
             ctx.push(apiClassName, "Object result;");
             ctx.push(apiClassName, "try (java.io.InputStream is = response.body()) {");

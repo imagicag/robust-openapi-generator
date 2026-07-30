@@ -21,6 +21,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This test generates a api from a schema and compiles it.
@@ -54,6 +56,9 @@ public class CompileTest {
         config.setImplSourceTargetDir(sourceDir);
         config.setCommonImplSourceTargetDir(sourceDir);
         config.setCommonApiSourceTargetDir(sourceDir);
+        config.setGson(true);
+        config.setJsr380(true);
+        config.setResponseBodyObjectAnnotations(new ArrayList<>(List.of("@Deprecated")));
 
         OpenApiGenerator.generate(config);
 

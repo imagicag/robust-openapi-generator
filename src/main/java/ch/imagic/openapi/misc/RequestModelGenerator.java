@@ -576,6 +576,6 @@ public class RequestModelGenerator {
                 throw new UnsupportedOperationException("NOT YET SUPPORTED!");
         }
 
-        return Util.findRecursiveTypeName(ctx, pm.getSchema(), null);
+        return Util.findRecursiveTypeName(ctx, pm.getSchema(), null, false);
     }
 }

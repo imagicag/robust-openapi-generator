@@ -20,6 +20,7 @@ import ch.imagic.openapi.model.*;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main  {
 
@@ -134,6 +135,8 @@ public class Main  {
         String extensionResponseSuffix = getOptionalVariable("EXTENSION_RESPONSE_SUFFIX", "Response");
         String extensionRequestSuffix = getOptionalVariable("EXTENSION_REQUEST_SUFFIX", "Request");
         String extensionOperationSuffix = getOptionalVariable("EXTENSION_OPERATION_SUFFIX", "Extended");
+        String responseObjectAnnotations = getOptionalVariable("RESPONSE_OBJECT_ANNOTATIONS", null);
+
 
         OpenApiGeneratorConfig config = new OpenApiGeneratorConfig();
         config.setSchema(new File(schema));
@@ -151,6 +154,10 @@ public class Main  {
         config.setJsr380(jsr380);
         config.setGson(gson);
         config.setJackson(jackson);
+        if (responseObjectAnnotations != null) {
+            var list = Arrays.stream(responseObjectAnnotations.split(";")).collect(Collectors.toCollection(ArrayList::new));
+            config.setResponseBodyObjectAnnotations(list);
+        }
 
         if (extensionSchema != null) {
             config.setExtensionSchema(new File(extensionSchema));
