@@ -19,6 +19,7 @@ import ch.imagic.openapi.model.PathModel;
 import ch.imagic.openapi.model.PathSchemaModel;
 import ch.imagic.openapi.model.RequestBodyModel;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -75,6 +76,7 @@ public class RequestModelGenerator {
         ctx.push(clazz, "package " + ctx.getReqParamPackage() + ";");
         ctx.push(clazz, "public class " + name + " implements java.io.Serializable, " + ctx.qualifyCommonApiClass("ToString") + ", " + ctx.qualifyCommonApiClass("RequestParameters") + " {");
         ctx.addIndent(clazz);
+        Set<String> existingEnumClasses = new HashSet<>();
 
         if (model.getParameters() != null) {
             int idx = -1;
@@ -83,8 +85,24 @@ public class RequestModelGenerator {
                 ParameterModel pm = ctx.findParameter(parameter.get$ref());
 
                 SchemaClassification paramClazz = SchemaClassification.fromSchema("parameter " + pm.getName() + " for op " + model.getOperationId(), pm.getSchema());
-                String paramType = getParameterMemberTypeName(ctx, model, pm, paramClazz);
+                List<String> constants = Util.getEnumRecursive(pm.getSchema());
+                String paramType;
                 String mngl = ctx.getMangledRequestParameterName(clazz, idx);
+                if (constants == null) {
+                    paramType = getParameterMemberTypeName(ctx, model, pm, paramClazz);
+                } else {
+                    String cln = Util.capitalize(Util.escapeForSourceCode(pm.getName()));
+                    if (!existingEnumClasses.add(cln)) {
+                        cln += idx;
+                        while (!existingEnumClasses.add(cln)) {
+                            cln += "$";
+                        }
+                    }
+
+
+                    paramType = cln;
+                    Util.generateEnum(ctx, clazz, cln, constants);
+                }
 
                 boolean required = pm.isRequired();
 
@@ -122,6 +140,15 @@ public class RequestModelGenerator {
                 RequestBodyModel requestBody = ctx.findRequestBody(model.getRequestBody().get$ref());
                 PathSchemaModel pathSchemaModel = requestBody.getContent().get(mimeType);
                 SchemaClassification childClass = SchemaClassification.fromSchema("request body " + model.getOperationId(), pathSchemaModel.getSchema());
+                List<String> constants = Util.getEnumRecursive(pathSchemaModel.getSchema());
+                String enumName = "RequestBodyJson";
+                if (constants != null) {
+                    while(!existingEnumClasses.add(enumName)) {
+                        enumName += "$";
+                    }
+                    Util.generateEnum(ctx, clazz, enumName, constants);
+                }
+
                 String propertyType;
                 switch (childClass) {
                     case ARRAY_STRING: {
@@ -145,8 +172,7 @@ public class RequestModelGenerator {
                         break;
                     }
                     case ENUM:
-                        //TODO support enum here
-                        propertyType = "String";
+                        propertyType = enumName;
                         break;
                     case INT64:
                         propertyType = "Long";
@@ -189,7 +215,7 @@ public class RequestModelGenerator {
                         break;
                     case MAP_ENUM:
                         //TODO support enum here
-                        propertyType = "java.util.Map<String, String>";
+                        propertyType = "java.util.Map<String, "+enumName+">";
                         break;
                     case MAP_BOOLEAN:
                         propertyType = "java.util.Map<String, Boolean>";
@@ -231,8 +257,7 @@ public class RequestModelGenerator {
                         propertyType = "java.util.Map<String, java.util.List<String>>";
                         break;
                     case MAP_ARRAY_ENUM:
-                        //TODO support enum here
-                        propertyType = "java.util.Map<String, java.util.List<String>>";
+                        propertyType = "java.util.Map<String, java.util.List<" + enumName + ">>";
                         break;
                     case MAP_ARRAY_BOOLEAN:
                         propertyType = "java.util.Map<String, java.util.List<Boolean>>";
@@ -273,8 +298,7 @@ public class RequestModelGenerator {
                         propertyType = "java.util.Map<String, java.util.Set<String>>";
                         break;
                     case MAP_SET_ENUM:
-                        //TODO support enum here
-                        propertyType = "java.util.Map<String, java.util.Set<String>>";
+                        propertyType = "java.util.Map<String, java.util.Set<" + enumName + ">>";
                         break;
                     case MAP_SET_BOOLEAN:
                         propertyType = "java.util.Map<String, java.util.Set<Boolean>>";
@@ -315,8 +339,7 @@ public class RequestModelGenerator {
                         propertyType = "java.util.Set<String>";
                         break;
                     case SET_ENUM:
-                        //TODO support enum here
-                        propertyType = "java.util.Set<String>";
+                        propertyType = "java.util.Set<" + enumName + ">";
                         break;
                     case SET_INT64:
                         propertyType = "java.util.Set<Long>";
@@ -356,8 +379,7 @@ public class RequestModelGenerator {
                         propertyType = "java.util.Set<java.util.Map<String, String>>";
                         break;
                     case SET_MAP_ENUM:
-                        //TODO support enum here
-                        propertyType = "java.util.Set<java.util.Map<String, String>>";
+                        propertyType = "java.util.Set<java.util.Map<String, "+ enumName +">>";
                         break;
                     case SET_MAP_BOOLEAN:
                         propertyType = "java.util.Set<java.util.Map<String, Boolean>>";
@@ -396,10 +418,9 @@ public class RequestModelGenerator {
                         break;
                     case ARRAY_ENUM:
                         //TODO support enum here
-                        propertyType = "java.util.List<String>";
+                        propertyType = "java.util.List<"+enumName+">";
                         break;
                     case ARRAY_BOOLEAN:
-                        //TODO support enum here
                         propertyType = "java.util.List<Boolean>";
                         break;
                     case ARRAY_INT64:
@@ -425,8 +446,7 @@ public class RequestModelGenerator {
                         propertyType = "java.util.List<java.util.Map<String, String>>";
                         break;
                     case ARRAY_MAP_ENUM:
-                        //TODO support enum here
-                        propertyType = "java.util.List<java.util.Map<String, String>>";
+                        propertyType = "java.util.List<java.util.Map<String, "+enumName+">>";
                         break;
                     case ARRAY_MAP_BOOLEAN:
                         propertyType = "java.util.List<java.util.Map<String, Boolean>>";

@@ -408,6 +408,45 @@
         }
       }
     },
+    "/enuminput/{input}": {
+      "get": {
+        "description": "Returns a plain json array of fake complex objects with two properties",
+        "operationId": "enuminput",
+        "parameters": [
+          {
+            "name": "input",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INPUTC",
+                "INPUTD"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "string",
+                "enum": [
+                  "INPUTA",
+                  "INPUTB"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "fake response"
+          }
+        }
+      }
+    },
     "/fakes": {
       "get": {
         "description": "Returns a plain json array of fake complex objects with two properties",

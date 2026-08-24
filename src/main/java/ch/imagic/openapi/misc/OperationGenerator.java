@@ -679,9 +679,9 @@ public class OperationGenerator {
                 case FLOAT:
                 case DOUBLE:
                 case BOOLEAN:
+                case ENUM:
                     RequestParamGenerator.generatePrimitiveParameter(ctx, className, prm, getter);
                     break;
-
                 case ARRAY_STRING:
                 case ARRAY_BOOLEAN:
                 case ARRAY_INT64:
