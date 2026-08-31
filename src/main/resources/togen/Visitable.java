@@ -16,6 +16,38 @@ import java.util.Objects;
 
 public interface Visitable {
 
+    /**
+     * Returns a immutable iterable over all property keys of this Visitable.
+     *
+     * The property keys might not directy correspond to java field names if the property names
+     * are not valid names for a java field.
+     */
+    Iterable<String> properties();
+
+    /**
+     * Returns the value in the object for the given property name.
+     * Returns null if the property is null or does not exist.
+     */
+    Object get(String prop);
+
+    /**
+     * Returns the type of the property for the given property name.
+     * The Type may be a simple Java Class or a ParameterizedType in case of generics such as List/Set.
+     * Returns null if the property is null or does not exist.
+     */
+    java.lang.reflect.Type type(String prop);
+
+    /**
+     * Sets the property to the given value.
+     * This method does nothing if the property is null or does not exist.
+     * This method throws a ClassCastException if the value is not directly assignable (castable) to
+     * the target type of the property.
+     */
+    void set(String prop, Object value);
+
+    /**
+     * Visit all properties of this element aswell as their child elements.
+     */
     <E extends Throwable> void visit(PropertyVisitor<E> visitor) throws E;
 
     static <E extends Throwable> void visitObject(Visitable instance, PropertyVisitor<E> visitor, Object... properties) throws E {

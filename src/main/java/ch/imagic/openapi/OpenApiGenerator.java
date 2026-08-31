@@ -108,6 +108,7 @@ public class OpenApiGenerator {
 
         SchemaPreProcessors.preProcess(context);
         DataModelGenerator.generateModels(context);
+        FieldTypesGenerator.generate(context);
         OperationGenerator.generateApis(context);
 
         if (config.getExtensionSchema() != null) {
@@ -139,6 +140,7 @@ public class OpenApiGenerator {
             ExtensionPreProcessor.processExtension(context, extContext);
 
             DataModelGenerator.generateModels(extContext);
+            FieldTypesGenerator.generate(extContext);
             OperationGenerator.generateApis(extContext);
 
             extContext.writeGeneratedFilesToDisk();

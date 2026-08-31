@@ -226,6 +226,8 @@ public class DataModelGenerator {
         }
 
         Set<String> properties = new LinkedHashSet<>();
+        Map<String, String> propertyFields = new LinkedHashMap<>();
+        Map<String, String> propertyTypes = new LinkedHashMap<>();
 
         for (Map.Entry<String, SchemaModel> e : schema.getProperties().entrySet()) {
             String propName = e.getKey();
@@ -276,6 +278,7 @@ public class DataModelGenerator {
                     break;
                 case MAP_SET_STRING:
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, "java.util.Set<String>", propSchema);
+                    break;
                 case MAP_SET_ENUM:
                     MemberGenerator.generateMapMember(context, fullyQualified, propName, mangledName, classname, "java.util.Set<"+enumName+">", propSchema);
                     break;
@@ -569,11 +572,15 @@ public class DataModelGenerator {
                 default:
                     throw new IllegalStateException("Cannot generate model property for schema " + name + " field " + propName + " classification is " + propClassification + " this is likely a bug in the generator");
             }
+
+            String qualifiedEnumName = enumName == null ? null : fullyQualified + "." + enumName;
+            propertyFields.put(propName, mangledName);
+            propertyTypes.put(propName, Util.findRecursiveTypeName(context, propSchema, qualifiedEnumName, false));
         }
 
         Util.generateHashCodeEquals(context, fullyQualified, properties);
         Util.generateToString(context, fullyQualified, classname, properties);
-        Util.generateVisitor(context, fullyQualified, classname, properties);
+        Util.generateVisitable(context, fullyQualified, propertyFields, propertyTypes);
 
         context.subIndent(fullyQualified);
         context.push(fullyQualified, "}");

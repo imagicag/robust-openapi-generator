@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Util {
 
@@ -456,9 +457,9 @@ public class Util {
                 String name = schema.getItems().getAdditionalProperties().get$ref();
                 String ctx = context.qualifyModelClass(context.modelNameToJavaClass(name));
                 if (useValid) {
-                    return "java.util.List<java.util.Map<String, " + withValidAnnotation(ctx) + ">";
+                    return "java.util.List<java.util.Map<String, " + withValidAnnotation(ctx) + ">>";
                 }
-                return "java.util.List<java.util.Map<String, " + ctx + ">";
+                return "java.util.List<java.util.Map<String, " + ctx + ">>";
             }
             case ARRAY_MAP_ANY:
                 return "java.util.List<java.util.Map<String, Object>>";
@@ -473,7 +474,7 @@ public class Util {
             case MULTI_DIMENSIONAL_SET:
                 return "java.util.Set<"+findRecursiveTypeName(context, schema.getItems(), enumName, useValid)+">";
             case MULTI_DIMENSIONAL_MAP:
-                return "java.util.Map<String, "+findRecursiveTypeName(context, schema.getItems(), enumName, useValid)+">";
+                return "java.util.Map<String, "+findRecursiveTypeName(context, schema.getAdditionalProperties(), enumName, useValid)+">";
             case MULTI_DIMENSIONAL_ARRAY:
                 return "java.util.List<"+findRecursiveTypeName(context, schema.getItems(), enumName, useValid)+">";
             default:
@@ -636,22 +637,99 @@ public class Util {
         context.push(fullyQualifiedClazzName, "}");
     }
 
-    public static void generateVisitor(GenerationContext context, String fullyQualifiedClazzName, String simpleClassName, Iterable<String> members) {
-        context.push(fullyQualifiedClazzName ,"");
-        context.push(fullyQualifiedClazzName, "@Override");
-        context.push(fullyQualifiedClazzName, "public <E extends Throwable> void visit("+ context.qualifyCommonApiClass("PropertyVisitor")+"<E> visitor) throws E {");
-        context.addIndent(fullyQualifiedClazzName);
-        context.push(fullyQualifiedClazzName, context.qualifyCommonApiClass("Visitable")+".visitObject(this, visitor");
-        context.addIndent(fullyQualifiedClazzName);
-        for (String prop : members) {
-            context.push(fullyQualifiedClazzName, ", \""+ Util.escapeForSourceCode(prop) + "\", this." + Util.escapeForSourceCode(prop));
-        }
-        context.subIndent(fullyQualifiedClazzName);
-        context.push(fullyQualifiedClazzName, ");");
+    public static void generateVisitable(GenerationContext context, String clazz, Map<String, String> fields, Map<String, String> types) {
+        context.push(clazz, "");
+        context.push(clazz, "@Override");
+        context.push(clazz, "public Iterable<String> properties() {");
+        context.addIndent(clazz);
+        String propertyNames = fields.keySet().stream()
+                .map(prop -> "\"" + escapeForSourceCode(prop) + "\"")
+                .collect(Collectors.joining(", "));
+        context.push(clazz, "return java.util.List.of(" + propertyNames + ");");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
 
-        context.subIndent(fullyQualifiedClazzName);
-        context.push(fullyQualifiedClazzName, "}");
-        context.push(fullyQualifiedClazzName, "");
+        context.push(clazz, "");
+        context.push(clazz, "@Override");
+        context.push(clazz, "public Object get(String prop) {");
+        context.addIndent(clazz);
+        generateNullGuard(context, clazz, "return null;");
+        context.push(clazz, "switch (prop) {");
+        context.addIndent(clazz);
+        for (Map.Entry<String, String> field : fields.entrySet()) {
+            context.push(clazz, "case \"" + escapeForSourceCode(field.getKey()) + "\": return this." + field.getValue() + ";");
+        }
+        context.push(clazz, "default: return null;");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+
+        context.push(clazz, "");
+        context.push(clazz, "@Override");
+        context.push(clazz, "public java.lang.reflect.Type type(String prop) {");
+        context.addIndent(clazz);
+        generateNullGuard(context, clazz, "return null;");
+        context.push(clazz, "switch (prop) {");
+        context.addIndent(clazz);
+        for (String prop : fields.keySet()) {
+            String type = types.get(prop);
+            String typeExpression = type + ".class";
+            if (type.contains("<")) {
+                typeExpression = context.getPackageName() + ".api.FieldTypes.TYPE" + context.registerFieldType(type);
+            }
+
+            context.push(clazz, "case \"" + escapeForSourceCode(prop) + "\": return " + typeExpression + ";");
+        }
+        context.push(clazz, "default: return null;");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+
+        context.push(clazz, "");
+        context.push(clazz, "@Override");
+        for (String field : types.values()) {
+            if (field.contains("<")) {
+                context.push(clazz, "@SuppressWarnings(\"unchecked\")");
+                break;
+            }
+        }
+        context.push(clazz, "public void set(String prop, Object value) {");
+        context.addIndent(clazz);
+        generateNullGuard(context, clazz, "return;");
+        context.push(clazz, "switch (prop) {");
+        context.addIndent(clazz);
+        for (Map.Entry<String, String> field : fields.entrySet()) {
+            context.push(clazz, "case \"" + escapeForSourceCode(field.getKey()) + "\": this." + field.getValue() + " = (" + types.get(field.getKey()) + ") value; return;");
+        }
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+
+        context.push(clazz ,"");
+        context.push(clazz, "@Override");
+        context.push(clazz, "public <E extends Throwable> void visit("+ context.qualifyCommonApiClass("PropertyVisitor")+"<E> visitor) throws E {");
+        context.addIndent(clazz);
+        context.push(clazz, context.qualifyCommonApiClass("Visitable")+".visitObject(this, visitor");
+        context.addIndent(clazz);
+        for (Map.Entry<String, String> field : fields.entrySet()) {
+            context.push(clazz, ", \""+ escapeForSourceCode(field.getKey()) + "\", this." + field.getValue());
+        }
+        context.subIndent(clazz);
+        context.push(clazz, ");");
+        context.subIndent(clazz);
+        context.push(clazz, "}");
+        context.push(clazz, "");
+    }
+
+    private static void generateNullGuard(GenerationContext context, String clazz, String action) {
+        context.push(clazz, "if (prop == null) {");
+        context.addIndent(clazz);
+        context.push(clazz, action);
+        context.subIndent(clazz);
+        context.push(clazz, "}");
     }
 
     public static void generateToString(GenerationContext context, String fullyQualifiedClazzName, String simpleClassName, Iterable<String> members) {

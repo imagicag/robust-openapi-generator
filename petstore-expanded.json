@@ -676,6 +676,21 @@
         },
         "type": "object"
       },
+      "StringSetMapContainer": {
+        "type": "object",
+        "properties": {
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "required": [

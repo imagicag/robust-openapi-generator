@@ -41,6 +41,8 @@ public class GenerationContext {
 
     private long typeCounter;
 
+    private long fieldTypeCounter;
+
     private String extensionOperationSuffix = "";
 
     private File commonApiSourceRoot;
@@ -56,6 +58,7 @@ public class GenerationContext {
     private Set<String> modelClassNamesMangle = new HashSet<>();
     private Map<String, String> modelClassNameMapping = new HashMap<>();
     private Map<String, Long> typeInfoMapping = new HashMap<>();
+    private Map<String, Long> fieldTypeInfoMapping = new LinkedHashMap<>();
 
     private boolean jsr380 = false;
     private boolean gson = false;
@@ -83,6 +86,17 @@ public class GenerationContext {
 
     public long nextType() {
         return typeCounter++;
+    }
+
+    public long registerFieldType(String type) {
+        Long existing = fieldTypeInfoMapping.get(type);
+        if (existing != null) {
+            return existing;
+        }
+
+        long result = fieldTypeCounter++;
+        fieldTypeInfoMapping.put(type, result);
+        return result;
     }
 
     public File getSourceDirForClass(String clazzName) {
@@ -320,6 +334,10 @@ public class GenerationContext {
 
     public void setTypeInfo(String type, Long value) {
         typeInfoMapping.put(type, value);
+    }
+
+    public Map<String, Long> getFieldTypeInfoMapping() {
+        return Collections.unmodifiableMap(fieldTypeInfoMapping);
     }
 
     private Map<String, String> compatModels = new HashMap<>();
@@ -656,4 +674,3 @@ public class GenerationContext {
         }
     }
 }
-
