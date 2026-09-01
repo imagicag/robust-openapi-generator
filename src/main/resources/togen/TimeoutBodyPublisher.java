@@ -34,11 +34,16 @@ public class TimeoutBodyPublisher implements HttpRequest.BodyPublisher, Flow.Sub
     private final long timeout;
     private final long totalTimeout;
     private final RequestContext context;
+    private final long contentLength;
 
-    public TimeoutBodyPublisher(Executor executor, InputStream inputStream, Duration timeout, Duration totalTimeout, RequestContext context) {
+    public TimeoutBodyPublisher(Executor executor, InputStream inputStream, long contentLength, Duration timeout, Duration totalTimeout, RequestContext context) {
         this.inputStream = Objects.requireNonNull(inputStream);
         this.executor = Objects.requireNonNull(executor);
         this.context = Objects.requireNonNull(context);
+        if (contentLength < -1) {
+            throw new IllegalArgumentException("contentLength must be >= -1");
+        }
+        this.contentLength = contentLength;
         long tm;
         try {
             tm = timeout.toNanos();
@@ -134,8 +139,20 @@ public class TimeoutBodyPublisher implements HttpRequest.BodyPublisher, Flow.Sub
 
     @Override
     public long contentLength() {
-        return -1;
+        return contentLength;
     }
+
+    private final Flow.Subscription NOOP_SUBSCRIBER = new Flow.Subscription() {
+        @Override
+        public void request(long n) {
+
+        }
+
+        @Override
+        public void cancel() {
+
+        }
+    };
 
     @Override
     public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
@@ -144,14 +161,20 @@ public class TimeoutBodyPublisher implements HttpRequest.BodyPublisher, Flow.Sub
             if (this.subscriber != null) {
                 cancel();
                 alreadySubscribed = true;
-            } else {
-                this.subscriber = subscriber;
             }
+            this.subscriber = subscriber;
         }
 
         if (alreadySubscribed) {
-            this.subscriber.onError(new IllegalStateException("subscribe called again with another subscriber"));
-            throw new IllegalStateException("already subscribed");
+            final IllegalStateException error = new IllegalStateException("subscribe called again with another subscriber");
+            try {
+                this.subscriber.onError(error);
+            } catch (Exception e) {
+                //DC
+            }
+            subscriber.onSubscribe(NOOP_SUBSCRIBER);
+            subscriber.onError(error);
+            return;
         }
 
         try {

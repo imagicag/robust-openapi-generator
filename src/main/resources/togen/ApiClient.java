@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ApiClient {
 
@@ -138,20 +139,23 @@ public abstract class ApiClient {
         }
 
         InputStream is = requestBody.read();
+        final long contentLenght = requestBody.contentLength().orElse(-1);
 
         if ("*/*".equals(contentType)) {
             context.setContentType("application/octet-stream");
             if (context.getRequestTimeout() == null) {
-                return HttpRequest.BodyPublishers.ofInputStream(() -> is);
+                final AtomicReference<InputStream> inputStream = new AtomicReference<>(is);
+                return HttpRequest.BodyPublishers.ofInputStream(() -> inputStream.getAndSet(null));
             }
-            return new TimeoutBodyPublisher(getExecutor(), is, context.getRequestTimeout(), Duration.ofNanos(Long.MAX_VALUE), context);
+            return new TimeoutBodyPublisher(getExecutor(), is, contentLenght, context.getRequestTimeout(), Duration.ofNanos(Long.MAX_VALUE), context);
         }
 
         context.setContentType(contentType);
         if (context.getRequestTimeout() == null) {
-            return HttpRequest.BodyPublishers.ofInputStream(() -> is);
+            final AtomicReference<InputStream> inputStream = new AtomicReference<>(is);
+            return HttpRequest.BodyPublishers.ofInputStream(() -> inputStream.getAndSet(null));
         }
-        return new TimeoutBodyPublisher(getExecutor(), is, context.getRequestTimeout(), Duration.ofNanos(Long.MAX_VALUE), context);
+        return new TimeoutBodyPublisher(getExecutor(), is, contentLenght, context.getRequestTimeout(), Duration.ofNanos(Long.MAX_VALUE), context);
     }
 
     protected HttpRequest.BodyPublisher processTextRequestBody(RequestContext context, String requestBody) throws ApiException, IOException {
