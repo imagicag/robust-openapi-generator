@@ -2,6 +2,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import undertest.api.model.Error;
 import undertest.api.model.FakeItem;
+import undertest.api.model.StringSetMapContainer;
 import undertest.common.api.Visitable;
 
 import java.util.ArrayList;
@@ -12,18 +13,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 public class VisitableTest {
 
     @Test
     public void exposesPropertiesUsingOpenApiNames() {
         Visitable value = new Error();
-
-        List<String> properties = new ArrayList<>();
-        value.properties().forEach(properties::add);
-
-        Assert.assertEquals(Arrays.asList("code", "class", "int", "float", "double", "message"), properties);
-        Assert.assertFalse(properties.contains("class$"));
+        Assert.assertEquals(new TreeSet<>(Arrays.asList("code", "class", "int", "float", "double", "message")), value.properties());
 
         Iterator<String> iterator = value.properties().iterator();
         iterator.next();
@@ -74,5 +71,19 @@ public class VisitableTest {
         Assert.assertNull(value.type(null));
         Assert.assertThrows(ClassCastException.class, () -> value.set("code", "not an integer"));
         Assert.assertThrows(ClassCastException.class, () -> value.set("int", new ArrayList<>()));
+    }
+
+    @Test
+    public void returnsRawTypeClassForProperties() {
+        Visitable value = new Error();
+
+        Assert.assertEquals(Integer.class, value.typeClass("code"));
+        Assert.assertEquals(String.class, value.typeClass("class"));
+        Assert.assertEquals(Set.class, value.typeClass("int"));
+        Assert.assertEquals(List.class, value.typeClass("float"));
+        Assert.assertEquals(Map.class, value.typeClass("double"));
+        Assert.assertEquals(Map.class, new StringSetMapContainer().typeClass("values"));
+        Assert.assertNull(value.typeClass("unknown"));
+        Assert.assertNull(value.typeClass(null));
     }
 }

@@ -101,7 +101,7 @@ public class GenerationContext {
 
     public File getSourceDirForClass(String clazzName) {
         File dir = Objects.requireNonNull(this.getImplSourceRoot(), "implSourceRoot must not be null");
-        if (clazzName.startsWith(this.getModelPackage()) || clazzName.startsWith(this.getReqParamPackage()) || clazzName.startsWith(this.getResponsePackage()) || clazzName.startsWith(this.getTagPackage())) {
+        if (clazzName.startsWith(this.getModelPackage()) || clazzName.startsWith(this.getReqParamPackage()) || clazzName.startsWith(this.getResponsePackage()) || clazzName.startsWith(this.getTagPackage()) || clazzName.endsWith(".api.FieldTypes")) {
             dir = Objects.requireNonNull(this.getApiSourceRoot(), "apiSourceRoot must not be null");
         }
 

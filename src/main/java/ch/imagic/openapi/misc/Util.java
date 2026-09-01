@@ -638,14 +638,17 @@ public class Util {
     }
 
     public static void generateVisitable(GenerationContext context, String clazz, Map<String, String> fields, Map<String, String> types) {
+
         context.push(clazz, "");
-        context.push(clazz, "@Override");
-        context.push(clazz, "public Iterable<String> properties() {");
-        context.addIndent(clazz);
         String propertyNames = fields.keySet().stream()
                 .map(prop -> "\"" + escapeForSourceCode(prop) + "\"")
                 .collect(Collectors.joining(", "));
-        context.push(clazz, "return java.util.List.of(" + propertyNames + ");");
+
+        context.push(clazz, "private static final java.util.SortedSet<String> PROPERTIES = java.util.Collections.unmodifiableSortedSet(new java.util.TreeSet<String>(java.util.List.of(" + propertyNames + ")));");
+        context.push(clazz, "@Override");
+        context.push(clazz, "public java.util.SortedSet<String> properties() {");
+        context.addIndent(clazz);
+        context.push(clazz, "return PROPERTIES;");
         context.subIndent(clazz);
         context.push(clazz, "}");
 
