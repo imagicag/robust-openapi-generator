@@ -17,9 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Marker interface for request parameters.
+ * Request parameters, visitable using the same member names as their generated toString method.
  */
-public interface RequestParameters {
+public interface RequestParameters extends Visitable {
 
     /**
      * Returns the desired request timeout.

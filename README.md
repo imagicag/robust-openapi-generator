@@ -142,7 +142,7 @@ public class MyApi extends ApiImpl {
 public static void main(String[] args) {
     MyApi api = new MyApi("http://localhost:9000/", HttpClient.newBuilder());
     //getUser would be a operation for which a method was generated in ApiImpl
-    GetUserResponse userResponse = api.getUser("Tom");
+    GetUserResponse userResponse = api.getUserJson(new GetUserRequest().withUserName("Tom"));
     if (userResponse.isS404()) {
         System.out.println("User not found");
         return;

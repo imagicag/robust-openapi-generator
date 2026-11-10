@@ -20,8 +20,10 @@ import ch.imagic.openapi.model.PathSchemaModel;
 import ch.imagic.openapi.model.RequestBodyModel;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -77,6 +79,7 @@ public class RequestModelGenerator {
         ctx.push(clazz, "public class " + name + " implements java.io.Serializable, " + ctx.qualifyCommonApiClass("ToString") + ", " + ctx.qualifyCommonApiClass("RequestParameters") + " {");
         ctx.addIndent(clazz);
         Set<String> existingEnumClasses = new HashSet<>();
+        Map<String, String> propertyTypes = new LinkedHashMap<>();
 
         if (model.getParameters() != null) {
             int idx = -1;
@@ -100,7 +103,7 @@ public class RequestModelGenerator {
                     }
 
 
-                    paramType = cln;
+                    paramType = clazz + "." + cln;
                     Util.generateEnum(ctx, clazz, cln, constants);
                 }
 
@@ -132,6 +135,7 @@ public class RequestModelGenerator {
                     }
                 }
                 MemberGenerator.generateTrivialMember(ctx, clazz, mngl, mngl, name, paramType, pm.getSchema());
+                propertyTypes.put(mngl, paramType);
             }
         }
 
@@ -147,6 +151,7 @@ public class RequestModelGenerator {
                         enumName += "$";
                     }
                     Util.generateEnum(ctx, clazz, enumName, constants);
+                    enumName = clazz + "." + enumName;
                 }
 
                 String propertyType;
@@ -505,17 +510,20 @@ public class RequestModelGenerator {
                 }
 
                 MemberGenerator.generateTrivialMember(ctx, clazz, "requestBody", "requestBody", name, propertyType, pathSchemaModel.getSchema());
+                propertyTypes.put("requestBody", propertyType);
             } else if (mimeType.equals("text/plain")) {
                 if (ctx.jsr380()) {
                     ctx.push(clazz, "@jakarta.validation.constraints.NotNull");
                 }
                 MemberGenerator.generateTrivialMember(ctx, clazz, "requestBody", "requestBody", name, "String", null);
+                propertyTypes.put("requestBody", "String");
             } else {
                 if (ctx.jsr380()) {
                     ctx.push(clazz, "@jakarta.validation.Valid");
                     ctx.push(clazz, "@jakarta.validation.constraints.NotNull");
                 }
                 MemberGenerator.generateTrivialMember(ctx, clazz, "requestBody", "requestBody", name, ctx.qualifyCommonApiClass("BinaryPayload"), null);
+                propertyTypes.put("requestBody", ctx.qualifyCommonApiClass("BinaryPayload"));
 
 
                 ctx.push(clazz, "public " + clazz + " withRequestBody(java.io.InputStream value) {");
@@ -566,10 +574,21 @@ public class RequestModelGenerator {
         MemberGenerator.generateMapMember(ctx, clazz, "additionalHeaderParameter", "additionalHeaderParameter", name, "java.util.List<String>", null);
         MemberGenerator.generateMapMember(ctx, clazz, "additionalQueryParameter", "additionalQueryParameter", name, "java.util.List<String>", null);
 
+        propertyTypes.put("requestTimeout", "java.time.Duration");
+        propertyTypes.put("responseBodyReadTimeout", "java.time.Duration");
+        propertyTypes.put("responseBodyTotalTimeout", "java.time.Duration");
+        propertyTypes.put("additionalHeaderParameter", "java.util.Map<String, java.util.List<String>>");
+        propertyTypes.put("additionalQueryParameter", "java.util.Map<String, java.util.List<String>>");
+
         List<String> toStringMembers = mangledNames.stream().filter(a -> !"requestBody".equals(a) || mimeType != null).collect(Collectors.toList());
 
         Util.generateHashCodeEquals(ctx, clazz, toStringMembers);
         Util.generateToString(ctx, clazz, name, toStringMembers);
+        Map<String, String> propertyFields = new LinkedHashMap<>();
+        for (String member : toStringMembers) {
+            propertyFields.put(member, member);
+        }
+        Util.generateVisitable(ctx, clazz, propertyFields, propertyTypes);
 
         ctx.subIndent(clazz);
         ctx.push(clazz, "}");
